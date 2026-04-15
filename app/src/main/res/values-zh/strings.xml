@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+
+    <string name="TransactionType1">&quot;hdx80pt9012.bin&quot;</string>
+    <string name="TransactionType2">&quot;hdx9012pt170519.bin&quot;</string>
+  	 <string name="TransactionType3">&quot;hdx_80_065_9019&quot;</string>
+  	 	 <string name="TransactionType4">&quot;HDX-PT95-LP-951.bin&quot;</string>
+  	 
+  	 <string name="itpw">              正在更新固件......</string>
+  	 <string name="itpw2">              正在更新字体库......</string>
+  	 <string name="Determine">"OK"</string>
+	<string name="cancel">"取消"</string>
+	<string name="UpdateFWWarn">"警告: 选择的版本是低于或等于当前版本"</string>
+	
+	<string name="CharDemo">"打印字符测试"</string>
+	<string name="CodeDemo">"打印二维码测试"  </string>
+	<string name="ImageDemo">"打印图像测试" </string>
+	<string name="GetVersion">"获取固件版本" </string>
+	<string name="UpdateVersion">"更新固件" </string>
+	<string name="UpdateFontLib">"更新字体库" </string> 
+	<string name="WarningTimeIsLong">"更新字体库需要大约6分钟!" </string> 
+ 
+	<string name="quit">"退出" </string>
+ 			
+    <string name="previousFWV"> "更新前的固件版本 :" </string>	
+	<string name="currentFWV"> "当前固件版本 :" </string>
+	
+	<string name="updateFWFinish">"更新固件完成"</string>
+
+	<string name="selectFW">"选择固件文件"</string>
+ 
+	<string name="appName">"打印控制程序"</string>
+ 
+	
+	<string name="getV"> "获取固件版本" </string>	
+
+	
+	<string name="hello">Hello World,  FileExplorer!</string>
+	<string name="app_name">LED-pwm</string>
+		 
+	<string-array name="language">
+	<item>"美国    "</item>  
+	<item>"法国    "</item>
+	<item>"德国    "</item>
+	<item>"英国    "</item>
+	<item>"丹麦I   "</item>
+	<item>"瑞典    "</item>
+	<item>"意大利  "</item>
+	<item>"西班牙I "</item>
+	<item>"日本    "</item>
+	<item>"挪威    "</item>
+	<item>"丹麦II  "</item>
+	<item>"西班牙II"</item>
+	<item>"拉丁美洲"</item>
+	<item>"韩国    "</item>
+	<item>"斯洛维尼亚/克罗帝亚"</item>
+	<item>"简体中文"</item>
+	</string-array> 
+	<string name="CurrentLanguageis"> "当前打印机使用的语言是 :" </string>	
+	<string name="IsOutOfPaper"> "打印机缺纸或者纸没有装好" </string>
+	<string name="HavePaper"> "打印机有纸" </string>
+	<string name="itpw3">              正在获取打印机信息......</string>
+	<string name="itpw4">              "更新字库完成 "</string>
+	<string name="PrinterNotNormal1"> "打印机温度太高" </string>
+</resources>

@@ -1,0 +1,1 @@
+git remote add origin https://gitee.com/quanguoheme/usb_sdk_printer-as_android.git
