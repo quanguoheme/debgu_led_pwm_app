@@ -1,56 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:orientation="vertical"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    >
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="led test"
-    
-          />
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin">
 
-    <Button
-        android:id="@+id/button_blue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="button_blue" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="LED 自动演示" />
 
-    <Button
-        android:id="@+id/button_red"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="button_red" />
+        <Button
+            android:id="@+id/button_music"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="音乐律动" />
 
-    <Button
-        android:id="@+id/button_green"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="button_green " />
+        <Button
+            android:id="@+id/button_static_white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="静态白色" />
 
-    <Button
-        android:id="@+id/button_flicker"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=" button_flicker"
+        <Button
+            android:id="@+id/button_breath"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="呼吸灯" />
 
-        />
+        <Button
+            android:id="@+id/button_flicker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="闪烁/爆闪" />
 
-    <Button
-        android:id="@+id/button_lamp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="button_lamp  "
+        <Button
+            android:id="@+id/button_gradient"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="渐变" />
 
-        />
+        <Button
+            android:id="@+id/button_lamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="跑马灯/流水灯" />
 
+        <Button
+            android:id="@+id/button_rainbow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="彩虹灯" />
 
-</LinearLayout>
+        <Button
+            android:id="@+id/button_random"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="随机色" />
+
+        <Button
+            android:id="@+id/button_red"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="红色" />
+
+        <Button
+            android:id="@+id/button_green"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="绿色" />
+
+        <Button
+            android:id="@+id/button_blue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="蓝色" />
+
+    </LinearLayout>
+</ScrollView>
