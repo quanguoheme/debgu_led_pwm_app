@@ -38,6 +38,20 @@
 	<string name="WarningTimeIsLong">"Updating Font Lib will Take about 6 minutes" </string> 
 	<string name="quit">"Quit" </string>
  	<string name="app_name">LED-pwm</string>
+	<string name="led_visualizer_title">LED &#x97F3;&#x4E50;&#x5F8B;&#x52A8;&#x53EF;&#x89C6;&#x5316;</string>
+	<string name="led_waveform_label">Waveform &#x97F3;&#x4E50;&#x6CE2;&#x5F62;</string>
+	<string name="led_frequency_label">&#x706F;&#x5149;&#x989C;&#x8272;&#x9891;&#x7387; / &#x5F3A;&#x5EA6;</string>
+	<string name="led_button_music">&#x97F3;&#x4E50;&#x5F8B;&#x52A8;</string>
+	<string name="led_button_static_white">&#x9759;&#x6001;&#x767D;&#x8272;</string>
+	<string name="led_button_breath">&#x547C;&#x5438;&#x706F;</string>
+	<string name="led_button_flicker">&#x95EA;&#x70C1;/&#x7206;&#x95EA;</string>
+	<string name="led_button_gradient">&#x6E10;&#x53D8;</string>
+	<string name="led_button_chase">&#x8DD1;&#x9A6C;&#x706F;/&#x6D41;&#x6C34;&#x706F;</string>
+	<string name="led_button_rainbow">&#x5F69;&#x8679;&#x706F;</string>
+	<string name="led_button_random">&#x968F;&#x673A;&#x8272;</string>
+	<string name="led_button_red">&#x7EA2;&#x8272;</string>
+	<string name="led_button_green">&#x7EFF;&#x8272;</string>
+	<string name="led_button_blue">&#x84DD;&#x8272;</string>
     <string name="previousFWV"> "Previous firmware version :" </string>	
 	<string name="currentFWV"> "Current firmware version :" </string>
 	

@@ -18,6 +18,8 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 
+import com.chibde.visualizer.BarVisualizer;
+import com.chibde.visualizer.LineVisualizer;
 import com.goodchip.ledstrip.LedStripJni;
 
 import java.util.Random;
@@ -67,6 +69,9 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     private LedStripJni ledstrip;
     private MediaPlayer mediaPlayer;
     private Visualizer visualizer;
+    private LineVisualizer lineVisualizer;
+    private BarVisualizer barVisualizer;
+    private LedStripPreviewView ledPreview;
 
     private int currentEffect = EFFECT_NONE;
     private int frameIndex = 0;
@@ -80,11 +85,18 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
         super.onCreate(savedInstanceState);
         setTitle(getTitle());
         getWindow().addFlags(FLAG_FULLSCREEN | FLAG_KEEP_SCREEN_ON);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         setContentView(R.layout.activity_led);
 
         handler = new MyHandler();
         ledstrip = LedStripJni.getLedstrip();
+        bindVisualizers();
         bindButtons();
 
         ledstrip.Init();
@@ -96,10 +108,26 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
         destroyed = true;
         stopCurrentEffect();
         if (ledstrip != null) {
-            ledstrip.sendData(createOffFrame());
+            int[] offFrame = createOffFrame();
+            ledstrip.sendData(offFrame);
+            updateLedPreview(offFrame);
             ledstrip.DeInit();
         }
         super.onDestroy();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        }
     }
 
     @Override
@@ -116,7 +144,10 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
         }
 
         if (currentEffect == EFFECT_MUSIC && mediaPlayer != null && hasRecordAudioPermission()) {
+            setupAudioVisualizers();
             setupVisualizer();
+        } else {
+            releaseAudioVisualizers();
         }
     }
 
@@ -150,6 +181,22 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
                 Log.w(TAG, "Button with ID " + buttonIds[i] + " not found in layout.");
             }
         }
+    }
+
+    private void bindVisualizers() {
+        ledPreview = findViewById(R.id.led_preview);
+        lineVisualizer = findViewById(R.id.line_visualizer);
+        barVisualizer = findViewById(R.id.bar_visualizer);
+
+        if (lineVisualizer != null) {
+            lineVisualizer.setColor(Color.rgb(91, 235, 255));
+        }
+        if (barVisualizer != null) {
+            barVisualizer.setColor(Color.rgb(255, 194, 86));
+            barVisualizer.setDensity(70);
+        }
+        updateLedPreview(createOffFrame());
+        setAudioVisualizerVisibility(false);
     }
 
     private int effectForButton(int id) {
@@ -227,6 +274,7 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
             handler.removeMessages(MSG_AUTO_NEXT);
         }
         releaseVisualizer();
+        releaseAudioVisualizers();
         releaseMediaPlayer();
         currentEffect = EFFECT_NONE;
     }
@@ -251,11 +299,21 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private void sendEffectFrame() {
-        if (ledstrip == null || currentEffect == EFFECT_NONE) {
+        if (currentEffect == EFFECT_NONE) {
             return;
         }
 
-        ledstrip.sendData(createFrameForEffect(currentEffect));
+        int[] frame = createFrameForEffect(currentEffect);
+        if (ledstrip != null) {
+            ledstrip.sendData(frame);
+        }
+        updateLedPreview(frame);
+    }
+
+    private void updateLedPreview(int[] frame) {
+        if (ledPreview != null) {
+            ledPreview.setLedData(frame);
+        }
     }
 
     private int[] createFrameForEffect(int effect) {
@@ -436,7 +494,10 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
             mediaPlayer.start();
 
             if (hasRecordAudioPermission()) {
+                setupAudioVisualizers();
                 setupVisualizer();
+            } else {
+                setAudioVisualizerVisibility(false);
             }
         } catch (Exception e) {
             Log.w(TAG, "Failed to start music effect.", e);
@@ -444,6 +505,52 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
             if (autoCycle) {
                 handler.sendEmptyMessageDelayed(MSG_AUTO_NEXT, AUTO_EFFECT_DURATION_MS);
             }
+        }
+    }
+
+    private void setupAudioVisualizers() {
+        releaseAudioVisualizers();
+        if (mediaPlayer == null || !hasRecordAudioPermission()) {
+            setAudioVisualizerVisibility(false);
+            return;
+        }
+
+        int audioSessionId = mediaPlayer.getAudioSessionId();
+        if (audioSessionId == 0) {
+            setAudioVisualizerVisibility(false);
+            return;
+        }
+
+        boolean hasVisualizer = false;
+        if (lineVisualizer != null) {
+            try {
+                lineVisualizer.setColor(Color.rgb(91, 235, 255));
+                lineVisualizer.setVisibility(View.VISIBLE);
+                lineVisualizer.setPlayer(audioSessionId);
+                hasVisualizer = true;
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to bind LineVisualizer.", e);
+                safeReleaseLineVisualizer();
+                lineVisualizer.setVisibility(View.INVISIBLE);
+            }
+        }
+
+        if (barVisualizer != null) {
+            try {
+                barVisualizer.setColor(Color.rgb(255, 194, 86));
+                barVisualizer.setDensity(70);
+                barVisualizer.setVisibility(View.VISIBLE);
+                barVisualizer.setPlayer(audioSessionId);
+                hasVisualizer = true;
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to bind BarVisualizer.", e);
+                safeReleaseBarVisualizer();
+                barVisualizer.setVisibility(View.INVISIBLE);
+            }
+        }
+
+        if (!hasVisualizer) {
+            setAudioVisualizerVisibility(false);
         }
     }
 
@@ -503,6 +610,44 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
         } catch (Exception ignored) {
         }
         visualizer = null;
+    }
+
+    private void releaseAudioVisualizers() {
+        safeReleaseLineVisualizer();
+        safeReleaseBarVisualizer();
+        setAudioVisualizerVisibility(false);
+    }
+
+    private void safeReleaseLineVisualizer() {
+        if (lineVisualizer == null) {
+            return;
+        }
+
+        try {
+            lineVisualizer.release();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void safeReleaseBarVisualizer() {
+        if (barVisualizer == null) {
+            return;
+        }
+
+        try {
+            barVisualizer.release();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void setAudioVisualizerVisibility(boolean visible) {
+        int visibility = visible ? View.VISIBLE : View.INVISIBLE;
+        if (lineVisualizer != null) {
+            lineVisualizer.setVisibility(visibility);
+        }
+        if (barVisualizer != null) {
+            barVisualizer.setVisibility(visibility);
+        }
     }
 
     private void releaseMediaPlayer() {
