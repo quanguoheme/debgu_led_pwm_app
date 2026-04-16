@@ -40,7 +40,7 @@
             android:textColor="#9FEFFF"
             android:textSize="13sp" />
 
-        <com.chibde.visualizer.LineVisualizer
+        <com.usbsdk.sample.SharedLineVisualizer
             android:id="@+id/line_visualizer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -56,7 +56,7 @@
             android:textColor="#FFD280"
             android:textSize="13sp" />
 
-        <com.chibde.visualizer.BarVisualizer
+        <com.usbsdk.sample.SharedBarVisualizer
             android:id="@+id/bar_visualizer"
             android:layout_width="match_parent"
             android:layout_height="0dp"

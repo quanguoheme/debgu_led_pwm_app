@@ -18,8 +18,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import com.chibde.visualizer.BarVisualizer;
-import com.chibde.visualizer.LineVisualizer;
 import com.goodchip.ledstrip.LedStripJni;
 
 import java.util.Random;
@@ -69,8 +67,8 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     private LedStripJni ledstrip;
     private MediaPlayer mediaPlayer;
     private Visualizer visualizer;
-    private LineVisualizer lineVisualizer;
-    private BarVisualizer barVisualizer;
+    private SharedLineVisualizer lineVisualizer;
+    private SharedBarVisualizer barVisualizer;
     private LedStripPreviewView ledPreview;
 
     private int currentEffect = EFFECT_NONE;
@@ -79,6 +77,7 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     private int musicLevel = 96;
     private boolean autoCycle = false;
     private boolean destroyed = false;
+    private boolean paused = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +99,6 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
         bindButtons();
 
         ledstrip.Init();
-        startAutoCycle();
     }
 
     @Override
@@ -143,11 +141,10 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
             return;
         }
 
-        if (currentEffect == EFFECT_MUSIC && mediaPlayer != null && hasRecordAudioPermission()) {
-            setupAudioVisualizers();
+        if (!paused && currentEffect == EFFECT_MUSIC && mediaPlayer != null && hasRecordAudioPermission()) {
             setupVisualizer();
         } else {
-            releaseAudioVisualizers();
+            clearAudioVisualizers();
         }
     }
 
@@ -229,13 +226,16 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private void startAutoCycle() {
+        if (paused || destroyed) {
+            return;
+        }
         autoCycle = true;
         autoIndex = 0;
         startEffect(AUTO_EFFECTS[autoIndex], true);
     }
 
     private void goToNextAutoEffect() {
-        if (!autoCycle || destroyed) {
+        if (!autoCycle || paused || destroyed) {
             return;
         }
 
@@ -247,6 +247,10 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private void startEffect(int effect, boolean fromAutoCycle) {
+        if (paused || destroyed) {
+            return;
+        }
+
         stopCurrentEffect();
         currentEffect = effect;
         frameIndex = 0;
@@ -274,7 +278,7 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
             handler.removeMessages(MSG_AUTO_NEXT);
         }
         releaseVisualizer();
-        releaseAudioVisualizers();
+        clearAudioVisualizers();
         releaseMediaPlayer();
         currentEffect = EFFECT_NONE;
     }
@@ -290,7 +294,7 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private void scheduleNextEffectFrame() {
-        if (handler == null || currentEffect == EFFECT_NONE || !isDynamicEffect(currentEffect)) {
+        if (handler == null || paused || currentEffect == EFFECT_NONE || !isDynamicEffect(currentEffect)) {
             return;
         }
 
@@ -299,7 +303,7 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private void sendEffectFrame() {
-        if (currentEffect == EFFECT_NONE) {
+        if (paused || currentEffect == EFFECT_NONE) {
             return;
         }
 
@@ -470,6 +474,10 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private void startMusicEffect(boolean fromAutoCycle) {
+        if (paused || destroyed) {
+            return;
+        }
+
         requestRecordAudioPermissionIfNeeded();
 
         try {
@@ -486,7 +494,7 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
-                    if (autoCycle && currentEffect == EFFECT_MUSIC && !destroyed) {
+                    if (autoCycle && currentEffect == EFFECT_MUSIC && !paused && !destroyed) {
                         goToNextAutoEffect();
                     }
                 }
@@ -494,10 +502,10 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
             mediaPlayer.start();
 
             if (hasRecordAudioPermission()) {
-                setupAudioVisualizers();
                 setupVisualizer();
             } else {
                 setAudioVisualizerVisibility(false);
+                clearWaveformData();
             }
         } catch (Exception e) {
             Log.w(TAG, "Failed to start music effect.", e);
@@ -508,61 +516,19 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
         }
     }
 
-    private void setupAudioVisualizers() {
-        releaseAudioVisualizers();
-        if (mediaPlayer == null || !hasRecordAudioPermission()) {
-            setAudioVisualizerVisibility(false);
-            return;
-        }
-
-        int audioSessionId = mediaPlayer.getAudioSessionId();
-        if (audioSessionId == 0) {
-            setAudioVisualizerVisibility(false);
-            return;
-        }
-
-        boolean hasVisualizer = false;
-        if (lineVisualizer != null) {
-            try {
-                lineVisualizer.setColor(Color.rgb(91, 235, 255));
-                lineVisualizer.setVisibility(View.VISIBLE);
-                lineVisualizer.setPlayer(audioSessionId);
-                hasVisualizer = true;
-            } catch (Exception e) {
-                Log.w(TAG, "Failed to bind LineVisualizer.", e);
-                safeReleaseLineVisualizer();
-                lineVisualizer.setVisibility(View.INVISIBLE);
-            }
-        }
-
-        if (barVisualizer != null) {
-            try {
-                barVisualizer.setColor(Color.rgb(255, 194, 86));
-                barVisualizer.setDensity(70);
-                barVisualizer.setVisibility(View.VISIBLE);
-                barVisualizer.setPlayer(audioSessionId);
-                hasVisualizer = true;
-            } catch (Exception e) {
-                Log.w(TAG, "Failed to bind BarVisualizer.", e);
-                safeReleaseBarVisualizer();
-                barVisualizer.setVisibility(View.INVISIBLE);
-            }
-        }
-
-        if (!hasVisualizer) {
-            setAudioVisualizerVisibility(false);
-        }
-    }
-
     private void setupVisualizer() {
         releaseVisualizer();
-        if (mediaPlayer == null || !hasRecordAudioPermission()) {
+        if (paused || mediaPlayer == null || !hasRecordAudioPermission()) {
+            setAudioVisualizerVisibility(false);
+            clearWaveformData();
             return;
         }
 
         try {
             int audioSessionId = mediaPlayer.getAudioSessionId();
             if (audioSessionId == 0) {
+                setAudioVisualizerVisibility(false);
+                clearWaveformData();
                 return;
             }
 
@@ -572,10 +538,11 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
             visualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
                 @Override
                 public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
-                    if (waveform == null || waveform.length == 0) {
+                    if (paused || waveform == null || waveform.length == 0) {
                         return;
                     }
 
+                    updateAudioVisualizers(waveform);
                     int sum = 0;
                     for (int i = 0; i < waveform.length; i++) {
                         int sample = (waveform[i] & 0xff) - 128;
@@ -590,9 +557,21 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
                 }
             }, Visualizer.getMaxCaptureRate() / 2, true, false);
             visualizer.setEnabled(true);
+            setAudioVisualizerVisibility(true);
         } catch (Exception e) {
             Log.w(TAG, "Failed to setup visualizer, fallback to simulated beat.", e);
             releaseVisualizer();
+            setAudioVisualizerVisibility(false);
+            clearWaveformData();
+        }
+    }
+
+    private void updateAudioVisualizers(byte[] waveform) {
+        if (lineVisualizer != null) {
+            lineVisualizer.setWaveformData(waveform);
+        }
+        if (barVisualizer != null) {
+            barVisualizer.setWaveformData(waveform);
         }
     }
 
@@ -612,31 +591,17 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
         visualizer = null;
     }
 
-    private void releaseAudioVisualizers() {
-        safeReleaseLineVisualizer();
-        safeReleaseBarVisualizer();
+    private void clearAudioVisualizers() {
+        clearWaveformData();
         setAudioVisualizerVisibility(false);
     }
 
-    private void safeReleaseLineVisualizer() {
-        if (lineVisualizer == null) {
-            return;
+    private void clearWaveformData() {
+        if (lineVisualizer != null) {
+            lineVisualizer.setWaveformData(null);
         }
-
-        try {
-            lineVisualizer.release();
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void safeReleaseBarVisualizer() {
-        if (barVisualizer == null) {
-            return;
-        }
-
-        try {
-            barVisualizer.release();
-        } catch (Exception ignored) {
+        if (barVisualizer != null) {
+            barVisualizer.setWaveformData(null);
         }
     }
 
@@ -680,10 +645,28 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
         }
     }
 
+    private void pauseAllEffectsAndShowBlue() {
+        if (handler != null) {
+            handler.removeMessages(MSG_EFFECT_FRAME);
+            handler.removeMessages(MSG_AUTO_NEXT);
+        }
+        autoCycle = false;
+        currentEffect = EFFECT_NONE;
+        releaseVisualizer();
+        clearAudioVisualizers();
+        releaseMediaPlayer();
+
+        int[] blueFrame = createSolidFrame(packRgb(0, 0, 255));
+        if (ledstrip != null) {
+            ledstrip.sendData(blueFrame);
+        }
+        updateLedPreview(blueFrame);
+    }
+
     private class MyHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            if (destroyed) {
+            if (paused || destroyed) {
                 return;
             }
 
@@ -700,5 +683,26 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
                     break;
             }
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        paused = false;
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        startAutoCycle();
+    }
+
+    @Override
+    protected void onPause() {
+        paused = true;
+        pauseAllEffectsAndShowBlue();
+        super.onPause();
     }
 }
