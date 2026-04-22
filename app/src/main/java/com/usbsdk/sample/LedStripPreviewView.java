@@ -9,11 +9,9 @@ import android.util.AttributeSet;
 import android.view.View;
 
 public class LedStripPreviewView extends View {
-    private static final int DEFAULT_LED_COUNT = 50;
-
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rect = new RectF();
-    private int[] colors = new int[DEFAULT_LED_COUNT];
+    private int[] colors = new int[LedStripConfig.getLedCount()];
 
     public LedStripPreviewView(Context context) {
         super(context);
@@ -29,7 +27,7 @@ public class LedStripPreviewView extends View {
 
     public void setLedData(int[] data) {
         if (data == null || data.length == 0) {
-            colors = new int[DEFAULT_LED_COUNT];
+            colors = new int[LedStripConfig.getLedCount()];
         } else {
             colors = new int[data.length];
             for (int i = 0; i < data.length; i++) {

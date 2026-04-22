@@ -25,7 +25,6 @@ import java.util.Random;
 public class LedStripTestActivity extends Activity implements OnClickListener {
     private static final String TAG = "LedStripTest";
 
-    private static final int LED_COUNT = 50;
     private static final int LED_GAP_SWITCH = 30; // ms
     private static final int AUTO_EFFECT_DURATION_MS = 10000;
     private static final int RANDOM_FRAME_INTERVAL_MS = 150;
@@ -350,15 +349,16 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private int[] createSolidFrame(int color) {
-        int[] data = new int[LED_COUNT];
-        for (int i = 0; i < LED_COUNT; i++) {
+        int ledCount = LedStripConfig.getLedCount();
+        int[] data = new int[ledCount];
+        for (int i = 0; i < ledCount; i++) {
             data[i] = color;
         }
         return data;
     }
 
     private int[] createOffFrame() {
-        return new int[LED_COUNT];
+        return new int[LedStripConfig.getLedCount()];
     }
 
     private int[] createBreathFrame() {
@@ -379,9 +379,10 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
                 {0, 80, 255},
                 {180, 0, 255}
         };
-        int[] data = new int[LED_COUNT];
-        for (int i = 0; i < LED_COUNT; i++) {
-            float position = ((i * palette.length) / (float) LED_COUNT) + frameIndex * 0.02f;
+        int ledCount = LedStripConfig.getLedCount();
+        int[] data = new int[ledCount];
+        for (int i = 0; i < ledCount; i++) {
+            float position = ((i * palette.length) / (float) ledCount) + frameIndex * 0.02f;
             int base = ((int) Math.floor(position)) % palette.length;
             int next = (base + 1) % palette.length;
             float ratio = position - (float) Math.floor(position);
@@ -391,12 +392,13 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private int[] createChaseFrame() {
-        int[] data = new int[LED_COUNT];
-        int head = frameIndex % LED_COUNT;
+        int ledCount = LedStripConfig.getLedCount();
+        int[] data = new int[ledCount];
+        int head = frameIndex % ledCount;
         for (int tail = 0; tail < 5; tail++) {
             int index = head - tail;
             if (index < 0) {
-                index += LED_COUNT;
+                index += ledCount;
             }
             int level = clamp(255 - tail * 45);
             data[index] = packRgb(level / 3, level / 2, level);
@@ -405,17 +407,19 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private int[] createRainbowFrame() {
-        int[] data = new int[LED_COUNT];
-        for (int i = 0; i < LED_COUNT; i++) {
-            float hue = (i * 360.0f / LED_COUNT + frameIndex * 4.0f) % 360.0f;
+        int ledCount = LedStripConfig.getLedCount();
+        int[] data = new int[ledCount];
+        for (int i = 0; i < ledCount; i++) {
+            float hue = (i * 360.0f / ledCount + frameIndex * 4.0f) % 360.0f;
             data[i] = packHsv(hue, 1.0f, 1.0f);
         }
         return data;
     }
 
     private int[] createRandomFrame() {
-        int[] data = new int[LED_COUNT];
-        for (int i = 0; i < LED_COUNT; i++) {
+        int ledCount = LedStripConfig.getLedCount();
+        int[] data = new int[ledCount];
+        for (int i = 0; i < ledCount; i++) {
             int red = 40 + random.nextInt(216);
             int green = 40 + random.nextInt(216);
             int blue = 40 + random.nextInt(216);
@@ -425,6 +429,7 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private int[] createMusicFrame() {
+        int ledCount = LedStripConfig.getLedCount();
         if (visualizer == null && mediaPlayer != null) {
             int position = mediaPlayer.getCurrentPosition();
             double pulse = Math.abs(Math.sin(position / 180.0));
@@ -432,12 +437,12 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
         }
 
         int level = clamp(musicLevel);
-        int litCount = Math.max(1, level * LED_COUNT / 255);
+        int litCount = Math.max(1, level * ledCount / 255);
         float value = 0.25f + (level / 255.0f) * 0.75f;
         float baseHue = (frameIndex * 4.0f + level) % 360.0f;
-        int[] data = new int[LED_COUNT];
+        int[] data = new int[ledCount];
 
-        for (int i = 0; i < LED_COUNT; i++) {
+        for (int i = 0; i < ledCount; i++) {
             if (i < litCount) {
                 data[i] = packHsv((baseHue + i * 7.0f) % 360.0f, 1.0f, value);
             } else {
