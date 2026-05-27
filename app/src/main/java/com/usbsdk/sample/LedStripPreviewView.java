@@ -60,9 +60,9 @@ public class LedStripPreviewView extends View {
     }
 
     private int toAndroidColor(int ledColor) {
-        int blue = (ledColor >> 16) & 0xff;
+        int green = (ledColor >> 16) & 0xff;
         int red = (ledColor >> 8) & 0xff;
-        int green = ledColor & 0xff;
+        int blue = ledColor & 0xff;
         return Color.rgb(red, green, blue);
     }
 }

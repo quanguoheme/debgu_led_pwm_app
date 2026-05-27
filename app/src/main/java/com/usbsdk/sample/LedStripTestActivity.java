@@ -465,7 +465,7 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private int packRgb(int red, int green, int blue) {
-        return (clamp(blue) << 16) | (clamp(red) << 8) | clamp(green);
+        return (clamp(green) << 16) | (clamp(red) << 8) | clamp(blue);
     }
 
     private int clamp(int value) {
