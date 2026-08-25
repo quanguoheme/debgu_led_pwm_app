@@ -196,31 +196,30 @@ public class LedStripTestActivity extends Activity implements OnClickListener {
     }
 
     private int effectForButton(int id) {
-        switch (id) {
-            case R.id.button_blue:
-                return EFFECT_BLUE;
-            case R.id.button_red:
-                return EFFECT_RED;
-            case R.id.button_green:
-                return EFFECT_GREEN;
-            case R.id.button_static_white:
-                return EFFECT_STATIC_WHITE;
-            case R.id.button_breath:
-                return EFFECT_BREATH;
-            case R.id.button_flicker:
-                return EFFECT_FLICKER;
-            case R.id.button_gradient:
-                return EFFECT_GRADIENT;
-            case R.id.button_lamp:
-                return EFFECT_CHASE;
-            case R.id.button_rainbow:
-                return EFFECT_RAINBOW;
-            case R.id.button_random:
-                return EFFECT_RANDOM;
-            case R.id.button_music:
-                return EFFECT_MUSIC;
-            default:
-                return EFFECT_STATIC_WHITE;
+        if (id == R.id.button_blue) {
+            return EFFECT_BLUE;
+        } else if (id == R.id.button_red) {
+            return EFFECT_RED;
+        } else if (id == R.id.button_green) {
+            return EFFECT_GREEN;
+        } else if (id == R.id.button_static_white) {
+            return EFFECT_STATIC_WHITE;
+        } else if (id == R.id.button_breath) {
+            return EFFECT_BREATH;
+        } else if (id == R.id.button_flicker) {
+            return EFFECT_FLICKER;
+        } else if (id == R.id.button_gradient) {
+            return EFFECT_GRADIENT;
+        } else if (id == R.id.button_lamp) {
+            return EFFECT_CHASE;
+        } else if (id == R.id.button_rainbow) {
+            return EFFECT_RAINBOW;
+        } else if (id == R.id.button_random) {
+            return EFFECT_RANDOM;
+        } else if (id == R.id.button_music) {
+            return EFFECT_MUSIC;
+        } else {
+            return EFFECT_STATIC_WHITE;
         }
     }
 

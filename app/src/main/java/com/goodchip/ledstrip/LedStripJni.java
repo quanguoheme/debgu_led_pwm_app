@@ -18,7 +18,12 @@ public class LedStripJni {
 	public native static int DeInit();
 
     static {
-    	System.loadLibrary("ledstrip");
+        try {
+            System.loadLibrary("ledstrip");
+            android.util.Log.i("LedStripJni", "libledstrip.so loaded successfully");
+        } catch (Throwable t) {
+            android.util.Log.e("LedStripJni", "Failed to load libledstrip.so", t);
+        }
     }
 
 }
