@@ -132,3 +132,55 @@ adb shell am start -n com.usbsdk.sample2/com.usbsdk.sample.LedStripTestActivity
 # 4. Check logcat output to verify SO loading and hardware status
 adb logcat -d -s LedStripJni:V LedStripTest:V
 ```
+
+---
+
+## 7. Frequently Asked Questions (FAQ)
+
+### Q1: Why is `libledstrip.so` not packaged inside the project's `libs` directory or the output APK?
+**A**:
+1. **Pre-installed System Vendor Library**: `libledstrip.so` is a board-level hardware driver abstraction library tightly coupled with the hardware and kernel device node (`/dev/ledstrip`). It is already pre-installed in the device system firmware at `/vendor/lib64/libledstrip.so` (or `/vendor/lib/libledstrip.so`).
+2. **Avoid Version & ABI Conflicts**: Driver `.so` libraries depend heavily on the underlying Bionic C runtime. Packaging a fixed `.so` inside an APK causes unnecessary APK size bloat and risks binary incompatibility or crashes after firmware OTA updates.
+3. **Seamless Driver Updates**: By leveraging the system vendor library, future firmware driver optimizations take effect automatically without requiring customers to recompile or republish their applications.
+
+---
+
+### Q2: Why is `<uses-native-library>` mandatory in `AndroidManifest.xml`?
+**A**:
+1. **Android 12+ (API 31+) Linker Namespace Isolation**:
+   Starting with Android 12, Google enforced strict NDK Linker Namespace isolation. Standard third-party apps run in isolated application namespaces and cannot access vendor partition libraries directly by default. Invoking `System.loadLibrary("ledstrip")` directly would fail with `dlopen failed: library "libledstrip.so" not found`.
+2. **Public Native Library Mechanism**:
+   The device firmware declares `libledstrip.so` as a public vendor library in `/vendor/etc/public.libraries.txt`.
+3. **Dynamic Linker Namespace Mapping**:
+   Declaring the library in `AndroidManifest.xml`:
+   ```xml
+   <uses-native-library
+       android:name="libledstrip.so"
+       android:required="false" />
+   ```
+   instructs Android's `nativeloader` to link and expose the pre-installed `libledstrip.so` from the vendor namespace into the app's ClassLoader namespace at process startup, allowing standard `System.loadLibrary("ledstrip")` calls to succeed.
+
+---
+
+### Q3: Why is `android:required` set to `"false"` instead of `"true"`?
+**A**:
+- **Graceful Fallback & Compatibility**:
+  - If set to `android:required="true"`, installing the APK on devices without this specific vendor hardware library (such as generic Android tablets or emulators) will immediately fail with `INSTALL_FAILED_MISSING_SHARED_LIBRARY`.
+  - Setting it to `"false"` allows the APK to install cleanly on any Android device. In the application code (`LedStripJni.java`), `System.loadLibrary("ledstrip")` is protected inside a `try-catch` block, ensuring the app handles missing hardware gracefully without crashing.
+
+---
+
+### Q4: How should customers integrate the LED strip control into their own application?
+**A**:
+1. **Step 1**: Do **NOT** copy any `.so` files into your project's `jniLibs` directory.
+2. **Step 2**: Add the native library declaration within the `<application>` tag of your `AndroidManifest.xml`:
+   ```xml
+   <application ...>
+       <!-- Declare access to device vendor pre-installed LED native library -->
+       <uses-native-library
+           android:name="libledstrip.so"
+           android:required="false" />
+       ...
+   </application>
+   ```
+3. **Step 3**: Copy or reference the `com.goodchip.ledstrip.LedStripJni` class into your source tree, then invoke `LedStripJni.getLedstrip().Init()` and `sendData(...)` directly in your business logic.

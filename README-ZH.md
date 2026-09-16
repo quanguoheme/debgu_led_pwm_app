@@ -131,3 +131,55 @@ adb shell am start -n com.usbsdk.sample2/com.usbsdk.sample.LedStripTestActivity
 # 4. 查看运行日志确认 SO 库与设备状态
 adb logcat -d -s LedStripJni:V LedStripTest:V
 ```
+
+---
+
+## 7. 常见问题 (FAQ)
+
+### Q1: 为什么 Demo 工程的 `libs` 目录没有打包 `libledstrip.so`，编译出的 APK 内 `lib/` 也是空的？
+**答**：
+1. **固件底层内置库**：`libledstrip.so` 是板级硬件驱动封装库，与主板硬件及内核驱动（`/dev/ledstrip`）强绑定。该库已经直接预置在设备的系统固件中（路径为 `/vendor/lib64/libledstrip.so` 或 `/vendor/lib/libledstrip.so`）。
+2. **避免软硬件版本冲突**：驱动 SO 库与系统底层 Bionic 运行库强相关，随 APK 打包固定版本会导致体积冗余，且设备固件 OTA 升级后容易引发二进制兼容性问题或冲突。
+3. **支持驱动无感升级**：依赖设备系统内置库，后续固件优化底层驱动时，客户应用无需重新编译打包即可自动生效。
+
+---
+
+### Q2: 为什么必须在 `AndroidManifest.xml` 中配置 `<uses-native-library>`？
+**答**：
+1. **Android 12+ (API 31+) Linker 命名空间安全隔离**：
+   从 Android 12 开始，Google 强制启用了 NDK Linker Namespace 隔离。普通应用处于受限的 App ClassLoader 命名空间中，默认无法跨界加载 `/vendor/` 分区下的原生共享库。如果直接调用 `System.loadLibrary("ledstrip")`，系统会报错拒绝加载：`dlopen failed: library "libledstrip.so" not found`。
+2. **系统公共库暴露机制 (Public Native Library)**：
+   设备系统已在 `/vendor/etc/public.libraries.txt` 中将 `libledstrip.so` 声明为开放共享库。
+3. **运行时动态链接注入**：
+   在 `AndroidManifest.xml` 的 `<application>` 下配置：
+   ```xml
+   <uses-native-library
+       android:name="libledstrip.so"
+       android:required="false" />
+   ```
+   该声明会指示 Android 运行时（`nativeloader`）在为应用创建进程命名空间时，将固件中的 `libledstrip.so` 挂载链接并暴露给应用，使 Java 层能够合法且顺利地加载和调用。
+
+---
+
+### Q3: 为什么配置中的 `android:required` 设置为 `"false"` 而不是 `"true"`？
+**答**：
+- **软依赖与容错设计（Graceful Fallback）**：
+  - 若配置为 `android:required="true"`，当该 APK 安装在未内置该硬件驱动库的普通 Android 设备、平板或模拟器上时，系统安装管理器（`PackageManager`）会直接拒绝安装并报错 `INSTALL_FAILED_MISSING_SHARED_LIBRARY`。
+  - 配置为 `false` 后，应用可以在任何 Android 设备上正常安装与运行基础界面；在代码实现（`LedStripJni.java`）中，`System.loadLibrary("ledstrip")` 被包裹在 `try-catch` 保护块中，即便在无该硬件的测试设备上也不会发生崩溃，极大地提高了应用的鲁棒性与设备兼容性。
+
+---
+
+### Q4: 客户将灯带控制功能集成到自己的主应用（App）时应如何操作？
+**答**：
+1. **第一步**：无需向本地工程的 `jniLibs` 目录拷贝任何 `.so` 文件。
+2. **第二步**：在客户主 App 的 `AndroidManifest.xml` 中的 `<application>` 标签下添加声明：
+   ```xml
+   <application ...>
+       <!-- 声明使用系统 Vendor 预置的 LED 灯带原生库 -->
+       <uses-native-library
+           android:name="libledstrip.so"
+           android:required="false" />
+       ...
+   </application>
+   ```
+3. **第三步**：直接复制或引用 `com.goodchip.ledstrip.LedStripJni` Java 封装类，在业务代码中正常调用 `LedStripJni.getLedstrip().Init()` 以及 `sendData(...)` 进行控制即可。
